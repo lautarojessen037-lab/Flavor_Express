@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mesa — Comida con sentido</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #f5f1ea;
+    --bg-alt: #ede6d8;
+    --bg-card: #faf6ef;
+    --fg: #1a1612;
+    --muted: #6b6358;
+    --accent: #d4502a;
+    --accent-dark: #a83d1f;
+    --olive: #3a4a2f;
+    --olive-light: #5a6b48;
+    --border: rgba(26, 22, 18, 0.12);
+  }
+  
+  * { -webkit-font-smoothing: antialiased; }
+  
+  body {
+    font-family: 'Manrope', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+  }
+  
+  .font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+  .font-display-i { font-family: 'Fraunces', serif; font-style: italic; font-optical-sizing: auto; }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  
+  .btn-primary {
+    background: var(--fg);
+    color: var(--bg);
+    padding: 14px 28px;
+    border-radius: 999px;
+    font-weight: 500;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--fg);
+  }
+  .btn-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--fg);
+    padding: 14px 28px;
+    border-radius: 999px;
+    font-weight: 500;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover {
+    border-color: var(--fg);
+    background: var(--bg-alt);
+  }
+  
+  .dish-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+  .dish-card:hover { transform: translateY(-6px); }
+  .dish-card:hover .dish-emoji-wrap { background: var(--accent); transform: rotate(-3deg); }
+  .dish-card:hover .dish-emoji { transform: scale(1.15); }
+  .dish-emoji-wrap { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  .dish-emoji { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  .animate-in { animation: fadeUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .animate-fade { animation: fadeIn 0.5s ease both; }
+  .animate-scale { animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+  
+  .view { display: none; }
+  .view.active { display: block; animation: fadeUp 0.5s ease-out; }
+  
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--fg); border-radius: 999px; }
+  
+  @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .marquee-track { animation: marquee 40s linear infinite; width: max-content; }
+  
+  @keyframes pulse-dot { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.8); opacity: 0.4; } }
+  .pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+  
+  .custom-radio {
+    appearance: none; width: 22px; height: 22px;
+    border: 1.5px solid var(--fg); border-radius: 50%;
+    position: relative; cursor: pointer; flex-shrink: 0; transition: all 0.2s;
+  }
+  .custom-radio:checked { border-color: var(--accent); }
+  .custom-radio:checked::after {
+    content: ''; position: absolute; inset: 4px;
+    background: var(--accent); border-radius: 50%;
+  }
+  
+  .tag { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; }
+  
+  .map-path { stroke-dasharray: 8 8; stroke-dashoffset: 0; animation: dash 1.5s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -16; } }
+  
+  .courier-icon {
+    offset-path: path('M 60 220 Q 140 100 240 180 T 440 160 L 540 100');
+    offset-rotate: auto;
+    animation: courier-move 10s ease-in-out infinite;
+  }
+  @keyframes courier-move {
+    0% { offset-distance: 0%; }
+    50% { offset-distance: 60%; }
+    100% { offset-distance: 100%; }
+  }
+  
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .spin-slow { animation: spin-slow 30s linear infinite; }
+  
+  .form-input {
+    background: transparent; border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0; font-size: 16px; color: var(--fg);
+    width: 100%; transition: border-color 0.3s; font-family: inherit;
+  }
+  .form-input:focus { outline: none; border-bottom-color: var(--fg); }
+  .form-input::placeholder { color: var(--muted); }
+  
+  .big-number {
+    font-family: 'Fraunces', serif; font-weight: 300;
+    font-size: 140px; line-height: 1;
+    color: var(--fg); opacity: 0.08; letter-spacing: -0.04em;
+  }
+  
+  .step-line { height: 1px; background: var(--border); flex: 1; position: relative; }
+  .step-line.active::after {
+    content: ''; position: absolute; inset: 0;
+    background: var(--fg); animation: drawLine 0.6s ease forwards;
+    transform-origin: left;
+  }
+  @keyframes drawLine { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  
+  .toast { animation: toastIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+  @keyframes toastIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .toast.out { animation: toastOut 0.3s ease forwards; }
+  @keyframes toastOut { to { transform: translateY(100%); opacity: 0; } }
+  
+  .cat-btn { transition: all 0.3s; position: relative; }
+  .cat-btn.active { background: var(--fg); color: var(--bg); }
+  
+  .hero-bg {
+    background: radial-gradient(ellipse at 20% 30%, rgba(212, 80, 42, 0.08), transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(58, 74, 47, 0.06), transparent 50%);
+  }
+  
+  .qty-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 50%;
+    transition: all 0.2s; cursor: pointer;
+  }
+  .qty-btn:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  
+  .currency-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--fg);
+    font-size: 13px; font-weight: 500;
+    transition: all 0.3s; cursor: pointer;
+  }
+  .currency-btn:hover { border-color: var(--fg); background: var(--bg-alt); }
+  .currency-btn .chev { transition: transform 0.3s; font-size: 10px; }
+  .currency-btn.open .chev { transform: rotate(180deg); }
+  
+  .currency-dropdown {
+    position: absolute; top: calc(100% + 8px); right: 0;
+    min-width: 240px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 20px; padding: 8px;
+    box-shadow: 0 20px 60px rgba(26,22,18,0.15);
+    opacity: 0; transform: translateY(-8px) scale(0.96);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 60;
+  }
+  .currency-dropdown.open {
+    opacity: 1; transform: translateY(0) scale(1); pointer-events: auto;
+  }
+  
+  .currency-option {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 12px;
+    cursor: pointer; transition: background 0.2s;
+    width: 100%; text-align: left;
+  }
+  .currency-option:hover { background: var(--bg-alt); }
+  .currency-option.selected { background: var(--fg); color: var(--bg); }
+  .currency-option .flag { font-size: 18px; line-height: 1; }
+  .currency-option .code { font-weight: 600; font-size: 13px; letter-spacing: 0.05em; }
+  .currency-option .name { font-size: 12px; opacity: 0.6; }
+  .currency-option .preview { margin-left: auto; font-family: 'Fraunces', serif; font-size: 14px; opacity: 0.7; }
+  
+  @media (max-width: 768px) {
+    .big-number { font-size: 80px; }
+    .currency-btn .label-full { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[var(--bg)]/85 backdrop-blur-md border-b border-[var(--border)]">
+  <div class="max-w-7xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
+    <button onclick="goTo('home')" class="flex items-center gap-2 group">
+      <div class="w-8 h-8 rounded-full bg-[var(--fg)] flex items-center justify-center">
+        <span class="text-[var(--bg)] font-display italic text-lg leading-none">m</span>
+      </div>
+      <span class="font-display text-xl tracking-tight">Mesa<span class="text-[var(--accent)]">.</span></span>
+    </button>
+    
+    <nav class="hidden md:flex items-center gap-8 text-sm">
+      <button onclick="goTo('home')" class="hover:text-[var(--accent)] transition-colors">Inicio</button>
+      <button onclick="goTo('menu')" class="hover:text-[var(--accent)] transition-colors">Menú</button>
+      <button onclick="goTo('tracking')" class="hover:text-[var(--accent)] transition-colors">Seguimiento</button>
+    </nav>
+    
+    <div class="flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-2 text-xs text-[var(--muted)] mr-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-[var(--olive-light)] pulse-dot"></span>
+        <span id="clock">--:--</span>
+      </div>
+      
+      <div class="relative" id="currency-wrap">
+        <button class="currency-btn" id="currency-btn" onclick="toggleCurrencyDropdown(event)">
+          <span id="currency-flag">🇪🇺</span>
+          <span id="currency-code">EUR</span>
+          <i class="fa-solid fa-chevron-down chev"></i>
+        </button>
+        <div class="currency-dropdown" id="currency-dropdown"></div>
+      </div>
+      
+      <button onclick="openCart()" class="relative w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-all">
+        <i class="fa-solid fa-bag-shopping text-sm"></i>
+        <span id="cart-count" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[var(--accent)] text-[var(--bg)] text-[10px] font-semibold flex items-center justify-center hidden">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="pt-20">
+
+<!-- ============== VISTA: HOME ============== -->
+<section id="view-home" class="view active">
+  
+  <div class="hero-bg">
+    <div class="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-24 md:pt-24 md:pb-32">
+      <div class="grid md:grid-cols-12 gap-8 items-end">
+        
+        <div class="md:col-span-7 animate-in">
+          <h1 class="font-display text-[clamp(56px,9vw,140px)] leading-[0.95] tracking-tight font-light">
+            Comida <br>
+            con <span class="font-display-i font-normal text-[var(--accent)]">sentido</span><span class="text-[var(--accent)]">.</span>
+          </h1>
+          
+          <p class="mt-10 max-w-md text-[var(--muted)] text-lg leading-relaxed">
+            Platos preparados con ingredientes de origen próximo, cocinados lentamente y entregados con cuidado. Sin atajos.
+          </p>
+          
+          <div class="mt-10 flex flex-wrap items-center gap-4">
+            <button onclick="goTo('menu')" class="btn-primary">
+              Ver el menú
+              <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+            <button onclick="goTo('tracking')" class="btn-ghost">
+              <i class="fa-solid fa-location-dot text-xs"></i>
+              Seguir pedido
+            </button>
+          </div>
+        </div>
+        
+        <div class="md:col-span-5 relative animate-in stagger-2">
+          <div class="relative aspect-[4/5] max-w-md mx-auto">
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="absolute w-[110%] h-[110%] rounded-full border border-[var(--border)] spin-slow flex items-center justify-center">
+                <span class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--bg)] px-3 text-[10px] tracking-[0.2em] uppercase text-[var(--muted)]">Fresco · Fresco · Fresco</span>
+              </div>
+              <div class="absolute w-[85%] h-[85%] rounded-full bg-[var(--accent)]/8 flex items-center justify-center">
+                <div class="absolute w-[80%] h-[80%] rounded-full border border-dashed border-[var(--accent)]/30"></div>
+                <span class="text-[140px] md:text-[180px] leading-none">🍜</span>
+              </div>
+            </div>
+            <div class="absolute top-8 -left-4 md:-left-8 bg-[var(--fg)] text-[var(--bg)] px-4 py-3 rounded-2xl rotate-[-6deg] shadow-xl">
+              <div class="text-[10px] tracking-widest uppercase opacity-60">Plato del día</div>
+              <div class="font-display text-lg">Ramen Tonkotsu</div>
+              <div class="text-xs mt-1 opacity-80">Caldo de 18 horas</div>
+            </div>
+            <div class="absolute bottom-12 -right-2 md:-right-6 bg-[var(--bg-card)] border border-[var(--border)] px-4 py-3 rounded-2xl rotate-[5deg] shadow-lg">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">⏱</span>
+                <div>
+                  <div class="text-[10px] tracking-widest uppercase text-[var(--muted)]">Entrega</div>
+                  <div class="font-display text-base">20 min</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="border-y border-[var(--border)] py-6 overflow-hidden bg-[var(--fg)] text-[var(--bg)]">
+    <div class="marquee-track flex items-center gap-12 whitespace-nowrap font-display text-2xl">
+      <span class="flex items-center gap-12">
+        <span class="font-display-i">Hecho a mano</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span>Ingredientes locales</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span class="font-display-i">Sin aditivos</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span>Entrega en 30 min</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span class="font-display-i">Cocina de temporada</span>
+        <span class="text-[var(--accent)]">✦</span>
+      </span>
+      <span class="flex items-center gap-12" aria-hidden="true">
+        <span class="font-display-i">Hecho a mano</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span>Ingredientes locales</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span class="font-display-i">Sin aditivos</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span>Entrega en 30 min</span>
+        <span class="text-[var(--accent)]">✦</span>
+        <span class="font-display-i">Cocina de temporada</span>
+        <span class="text-[var(--accent)]">✦</span>
+      </span>
+    </div>
+  </div>
+  
+  <div class="max-w-7xl mx-auto px-6 md:px-10 py-20 md:py-28">
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <div class="tag text-[var(--muted)] mb-3">02 — Destacados</div>
+        <h2 class="font-display text-4xl md:text-6xl tracking-tight font-light">
+          Lo mejor de <span class="font-display-i">esta semana</span>
+        </h2>
+      </div>
+      <button onclick="goTo('menu')" class="hidden md:flex items-center gap-2 text-sm hover:text-[var(--accent)] transition-colors group">
+        Ver todo
+        <i class="fa-solid fa-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+      </button>
+    </div>
+    
+    <div id="featured-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+  </div>
+  
+  <div class="bg-[var(--bg-alt)] border-y border-[var(--border)]">
+    <div class="max-w-7xl mx-auto px-6 md:px-10 py-20 md:py-28 grid md:grid-cols-12 gap-8">
+      <div class="md:col-span-5">
+        <div class="tag text-[var(--muted)] mb-4">03 — Filosofía</div>
+        <h2 class="font-display text-4xl md:text-5xl tracking-tight font-light leading-tight">
+          Cocinamos <span class="font-display-i text-[var(--accent)]">despacio</span> para que tú comas bien.
+        </h2>
+      </div>
+      <div class="md:col-span-7 grid md:grid-cols-3 gap-8 mt-8 md:mt-0">
+        <div>
+          <div class="big-number">01</div>
+          <h3 class="font-display text-xl mb-2 mt-2">Origen</h3>
+          <p class="text-sm text-[var(--muted)] leading-relaxed">Productores a menos de 100 km. Conocemos cada nombre, cada campo.</p>
+        </div>
+        <div>
+          <div class="big-number">02</div>
+          <h3 class="font-display text-xl mb-2 mt-2">Tiempo</h3>
+          <p class="text-sm text-[var(--muted)] leading-relaxed">Caldos de 18 horas, masas madres de 24. Sin atajos, sin prisas.</p>
+        </div>
+        <div>
+          <div class="big-number">03</div>
+          <h3 class="font-display text-xl mb-2 mt-2">Entrega</h3>
+          <p class="text-sm text-[var(--muted)] leading-relaxed">Bicicleta eléctrica. El plato llega como salió de la cocina.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="max-w-7xl mx-auto px-6 md:px-10 py-24 md:py-32 text-center">
+    <div class="text-6xl md:text-8xl mb-6">🍽️</div>
+    <h2 class="font-display text-4xl md:text-7xl tracking-tight font-light mb-6">
+      ¿Listo para <span class="font-display-i">comer</span>?
+    </h2>
+    <p class="text-[var(--muted)] max-w-md mx-auto mb-10">Tu primer pedido está a un clic. Y a 30 minutos de tu mesa.</p>
+    <button onclick="goTo('menu')" class="btn-primary">
+      Empezar pedido
+      <i class="fa-solid fa-arrow-right text-xs"></i>
+    </button>
+  </div>
+  
+</section>
+
+<!-- ============== VISTA: MENÚ ============== -->
+<section id="view-menu" class="view">
+  <div class="max-w-7xl mx-auto px-6 md:px-10 py-12 md:py-20">
+    
+    <div class="mb-12 animate-in">
+      <div class="tag text-[var(--muted)] mb-3">Menú completo</div>
+      <h1 class="font-display text-5xl md:text-7xl tracking-tight font-light">
+        Todos los <span class="font-display-i">platos</span>
+      </h1>
+      <p class="text-[var(--muted)] mt-4 max-w-md">Selecciona, personaliza y recibe. Tan simple como eso.</p>
+    </div>
+    
+    <div class="flex flex-wrap gap-2 mb-12 animate-in stagger-1">
+      <button class="cat-btn active px-5 py-2.5 rounded-full border border-[var(--border)] text-sm" data-cat="all">Todos</button>
+      <button class="cat-btn px-5 py-2.5 rounded-full border border-[var(--border)] text-sm" data-cat="italiana">Italiana</button>
+      <button class="cat-btn px-5 py-2.5 rounded-full border border-[var(--border)] text-sm" data-cat="japonesa">Japonesa</button>
+      <button class="cat-btn px-5 py-2.5 rounded-full border border-[var(--border)] text-sm" data-cat="americana">Americana</button>
+      <button class="cat-btn px-5 py-2.5 rounded-full border border-[var(--border)] text-sm" data-cat="mexicana">Mexicana</button>
+      <button class="cat-btn px-5 py-2.5 rounded-full border border-[var(--border)] text-sm" data-cat="saludable">Saludable</button>
+      <button class="cat-btn px-5 py-2.5 rounded-full border border-[var(--border)] text-sm" data-cat="tailandesa">Tailandesa</button>
+    </div>
+    
+    <div id="menu-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    
+    <div id="empty-state" class="hidden text-center py-20">
+      <div class="text-5xl mb-4">🍃</div>
+      <p class="text-[var(--muted)]">No hay platos en esta categoría.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============== VISTA: CHECKOUT ============== -->
+<section id="view-checkout" class="view">
+  <div class="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-20">
+    
+    <div class="flex items-center gap-2 mb-12 animate-in">
+      <div class="flex items-center gap-2">
+        <div id="step-1-dot" class="w-7 h-7 rounded-full bg-[var(--fg)] text-[var(--bg)] text-xs font-semibold flex items-center justify-center">1</div>
+        <span class="text-sm hidden sm:inline">Entrega</span>
+      </div>
+      <div id="step-1-line" class="step-line"></div>
+      <div class="flex items-center gap-2">
+        <div id="step-2-dot" class="w-7 h-7 rounded-full border border-[var(--border)] text-xs font-semibold flex items-center justify-center">2</div>
+        <span class="text-sm hidden sm:inline">Pago</span>
+      </div>
+      <div id="step-2-line" class="step-line"></div>
+      <div class="flex items-center gap-2">
+        <div id="step-3-dot" class="w-7 h-7 rounded-full border border-[var(--border)] text-xs font-semibold flex items-center justify-center">3</div>
+        <span class="text-sm hidden sm:inline">Confirmación</span>
+      </div>
+    </div>
+    
+    <div id="checkout-step-1" class="animate-in">
+      <h1 class="font-display text-4xl md:text-5xl tracking-tight font-light mb-2">¿Dónde lo llevamos?</h1>
+      <p class="text-[var(--muted)] mb-10">Nuestro repartidor llegará en 25-35 minutos.</p>
+      
+      <div class="grid md:grid-cols-2 gap-6 mb-10">
+        <div>
+          <label class="tag text-[var(--muted)] block mb-1">Nombre</label>
+          <input type="text" class="form-input" placeholder="Tu nombre" value="Alex">
+        </div>
+        <div>
+          <label class="tag text-[var(--muted)] block mb-1">Teléfono</label>
+          <input type="tel" class="form-input" placeholder="+34 600 000 000" value="+34 600 123 456">
+        </div>
+        <div class="md:col-span-2">
+          <label class="tag text-[var(--muted)] block mb-1">Dirección</label>
+          <input type="text" class="form-input" placeholder="Calle, número, piso" value="Calle del Olivar 24, 3ºB">
+        </div>
+        <div>
+          <label class="tag text-[var(--muted)] block mb-1">Ciudad</label>
+          <input type="text" class="form-input" placeholder="Ciudad" value="Madrid">
+        </div>
+        <div>
+          <label class="tag text-[var(--muted)] block mb-1">Código postal</label>
+          <input type="text" class="form-input" placeholder="00000" value="28012">
+        </div>
+        <div class="md:col-span-2">
+          <label class="tag text-[var(--muted)] block mb-1">Notas para el repartidor (opcional)</label>
+          <input type="text" class="form-input" placeholder="Portón verde, segunda puerta...">
+        </div>
+      </div>
+      
+      <div class="flex justify-between items-center">
+        <button onclick="goTo('menu')" class="btn-ghost">
+          <i class="fa-solid fa-arrow-left text-xs"></i>
+          Volver
+        </button>
+        <button onclick="nextStep()" class="btn-primary">
+          Continuar al pago
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div id="checkout-step-2" class="hidden">
+      <h1 class="font-display text-4xl md:text-5xl tracking-tight font-light mb-2">Elige cómo pagar</h1>
+      <p class="text-[var(--muted)] mb-10">Todos los pagos son seguros y encriptados.</p>
+      
+      <div class="space-y-3 mb-10">
+        <label class="flex items-center gap-4 p-5 border border-[var(--border)] rounded-2xl cursor-pointer hover:border-[var(--fg)] transition-colors">
+          <input type="radio" name="pago" class="custom-radio" checked>
+          <div class="flex-1">
+            <div class="font-display text-lg">Tarjeta de crédito</div>
+            <div class="text-sm text-[var(--muted)]">Visa, Mastercard, Amex</div>
+          </div>
+          <div class="flex gap-2 text-2xl opacity-60">
+            <i class="fa-brands fa-cc-visa"></i>
+            <i class="fa-brands fa-cc-mastercard"></i>
+          </div>
+        </label>
+        
+        <label class="flex items-center gap-4 p-5 border border-[var(--border)] rounded-2xl cursor-pointer hover:border-[var(--fg)] transition-colors">
+          <input type="radio" name="pago" class="custom-radio">
+          <div class="flex-1">
+            <div class="font-display text-lg">Apple Pay / Google Pay</div>
+            <div class="text-sm text-[var(--muted)]">Pago con un toque</div>
+          </div>
+          <div class="flex gap-2 text-2xl opacity-60">
+            <i class="fa-brands fa-apple-pay"></i>
+            <i class="fa-brands fa-google-pay"></i>
+          </div>
+        </label>
+        
+        <label class="flex items-center gap-4 p-5 border border-[var(--border)] rounded-2xl cursor-pointer hover:border-[var(--fg)] transition-colors">
+          <input type="radio" name="pago" class="custom-radio">
+          <div class="flex-1">
+            <div class="font-display text-lg">Efectivo al recibir</div>
+            <div class="text-sm text-[var(--muted)]">Pago en mano al repartidor</div>
+          </div>
+          <div class="text-2xl opacity-60">💵</div>
+        </label>
+      </div>
+      
+      <div id="card-data" class="grid md:grid-cols-2 gap-6 mb-10">
+        <div class="md:col-span-2">
+          <label class="tag text-[var(--muted)] block mb-1">Número de tarjeta</label>
+          <input type="text" class="form-input" placeholder="0000 0000 0000 0000" value="4242 4242 4242 4242">
+        </div>
+        <div>
+          <label class="tag text-[var(--muted)] block mb-1">Caducidad</label>
+          <input type="text" class="form-input" placeholder="MM/AA" value="12/27">
+        </div>
+        <div>
+          <label class="tag text-[var(--muted)] block mb-1">CVV</label>
+          <input type="text" class="form-input" placeholder="123" value="123">
+        </div>
+      </div>
+      
+      <div class="flex justify-between items-center">
+        <button onclick="prevStep()" class="btn-ghost">
+          <i class="fa-solid fa-arrow-left text-xs"></i>
+          Volver
+        </button>
+        <button onclick="nextStep()" class="btn-primary">
+          Revisar pedido
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div id="checkout-step-3" class="hidden">
+      <h1 class="font-display text-4xl md:text-5xl tracking-tight font-light mb-2">Revisa todo</h1>
+      <p class="text-[var(--muted)] mb-10">Un último vistazo antes de confirmar.</p>
+      
+      <div class="grid md:grid-cols-2 gap-8 mb-10">
+        <div class="p-6 border border-[var(--border)] rounded-2xl">
+          <div class="tag text-[var(--muted)] mb-3">Entrega</div>
+          <div class="font-display text-lg mb-1">Alex</div>
+          <div class="text-sm text-[var(--muted)]">Calle del Olivar 24, 3ºB<br>28012 Madrid<br>+34 600 123 456</div>
+        </div>
+        <div class="p-6 border border-[var(--border)] rounded-2xl">
+          <div class="tag text-[var(--muted)] mb-3">Pago</div>
+          <div class="font-display text-lg mb-1">Tarjeta ····4242</div>
+          <div class="text-sm text-[var(--muted)]">Caduca 12/27</div>
+        </div>
+      </div>
+      
+      <div class="p-6 bg-[var(--bg-alt)] rounded-2xl mb-10">
+        <div class="tag text-[var(--muted)] mb-4">Tu pedido</div>
+        <div id="checkout-summary" class="space-y-3"></div>
+        <div class="border-t border-[var(--border)] mt-4 pt-4 space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-[var(--muted)]">Subtotal</span><span id="checkout-subtotal"></span></div>
+          <div class="flex justify-between"><span class="text-[var(--muted)]">Envío</span><span id="checkout-shipping"></span></div>
+          <div class="flex justify-between font-display text-xl pt-2"><span>Total</span><span id="checkout-total"></span></div>
+        </div>
+      </div>
+      
+      <div class="flex justify-between items-center">
+        <button onclick="prevStep()" class="btn-ghost">
+          <i class="fa-solid fa-arrow-left text-xs"></i>
+          Volver
+        </button>
+        <button onclick="placeOrder()" class="btn-primary">
+          Confirmar pedido
+          <i class="fa-solid fa-check text-xs"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== VISTA: TRACKING ============== -->
+<section id="view-tracking" class="view">
+  <div class="max-w-7xl mx-auto px-6 md:px-10 py-12 md:py-20">
+    
+    <div class="mb-10 animate-in">
+      <div class="tag text-[var(--muted)] mb-3">Pedido #MESA-8472</div>
+      <h1 class="font-display text-5xl md:text-7xl tracking-tight font-light">
+        En <span class="font-display-i text-[var(--accent)]">camino</span>
+      </h1>
+      <p class="text-[var(--muted)] mt-4">Llegará en aproximadamente <span class="font-display text-[var(--fg)] text-lg">12 minutos</span></p>
+    </div>
+    
+    <div class="grid lg:grid-cols-12 gap-8">
+      
+      <div class="lg:col-span-8 animate-in stagger-1">
+        <div class="relative aspect-[16/10] bg-[var(--bg-alt)] rounded-3xl overflow-hidden border border-[var(--border)]">
+          
+          <svg viewBox="0 0 600 380" class="w-full h-full" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(26,22,18,0.06)" stroke-width="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)"/>
+            
+            <rect x="40" y="40" width="100" height="80" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="160" y="40" width="140" height="100" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="320" y="40" width="120" height="80" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="460" y="40" width="100" height="120" fill="rgba(26,22,18,0.04)" rx="6"/>
+            
+            <rect x="40" y="140" width="80" height="100" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="140" y="160" width="120" height="80" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="280" y="140" width="100" height="120" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="400" y="180" width="80" height="100" fill="rgba(26,22,18,0.04)" rx="6"/>
+            
+            <rect x="40" y="260" width="120" height="80" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="180" y="260" width="100" height="100" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="300" y="280" width="140" height="80" fill="rgba(26,22,18,0.04)" rx="6"/>
+            <rect x="460" y="300" width="100" height="60" fill="rgba(26,22,18,0.04)" rx="6"/>
+            
+            <path d="M 60 220 Q 140 100 240 180 T 440 160 L 540 100" 
+                  fill="none" stroke="#d4502a" stroke-width="2.5" 
+                  stroke-linecap="round" class="map-path"/>
+            
+            <path d="M 60 220 Q 140 100 240 180" 
+                  fill="none" stroke="#1a1612" stroke-width="2.5" 
+                  stroke-linecap="round"/>
+            
+            <g transform="translate(60, 220)">
+              <circle r="20" fill="#1a1612" opacity="0.1"/>
+              <circle r="10" fill="#1a1612"/>
+              <circle r="4" fill="#f5f1ea"/>
+              <text y="-28" text-anchor="middle" font-family="Manrope" font-size="10" font-weight="600" letter-spacing="0.1em" fill="#1a1612">MESA</text>
+            </g>
+            
+            <g transform="translate(540, 100)">
+              <circle r="24" fill="#d4502a" opacity="0.15" class="pulse-dot"/>
+              <circle r="12" fill="#d4502a"/>
+              <text y="3" text-anchor="middle" font-size="14">🏠</text>
+              <text y="-32" text-anchor="middle" font-family="Manrope" font-size="10" font-weight="600" letter-spacing="0.1em" fill="#1a1612">TU CASA</text>
+            </g>
+          </svg>
+          
+          <div class="courier-icon absolute" style="width: 32px; height: 32px; margin-left: -16px; margin-top: -16px;">
+            <div class="w-8 h-8 rounded-full bg-[var(--fg)] flex items-center justify-center text-[var(--bg)] text-sm shadow-lg">🛵</div>
+          </div>
+          
+          <div class="absolute top-5 left-5 bg-[var(--bg)] px-4 py-2 rounded-full border border-[var(--border)] flex items-center gap-2 text-xs">
+            <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)] pulse-dot"></span>
+            <span>En vivo · Actualizado ahora</span>
+          </div>
+          
+          <div class="absolute bottom-5 right-5 bg-[var(--fg)] text-[var(--bg)] px-5 py-3 rounded-2xl">
+            <div class="text-[10px] tracking-widest uppercase opacity-60">ETA</div>
+            <div class="font-display text-2xl">12:34</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="lg:col-span-4 animate-in stagger-2">
+        <div class="p-6 border border-[var(--border)] rounded-3xl mb-6">
+          <div class="tag text-[var(--muted)] mb-4">Estado del pedido</div>
+          
+          <div class="space-y-6">
+            <div class="flex gap-4">
+              <div class="relative flex-shrink-0">
+                <div class="w-8 h-8 rounded-full bg-[var(--fg)] text-[var(--bg)] flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
+                <div class="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-[var(--fg)]"></div>
+              </div>
+              <div class="pt-1">
+                <div class="font-display text-base">Pedido confirmado</div>
+                <div class="text-xs text-[var(--muted)] mt-0.5">19:02 · Hace 18 minutos</div>
+              </div>
+            </div>
+            
+            <div class="flex gap-4">
+              <div class="relative flex-shrink-0">
+                <div class="w-8 h-8 rounded-full bg-[var(--fg)] text-[var(--bg)] flex items-center justify-center text-xs"><i class="fa-solid fa-check"></i></div>
+                <div class="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-[var(--fg)]"></div>
+              </div>
+              <div class="pt-1">
+                <div class="font-display text-base">En la cocina</div>
+                <div class="text-xs text-[var(--muted)] mt-0.5">19:08 · Cocinando tu plato</div>
+              </div>
+            </div>
+            
+            <div class="flex gap-4">
+              <div class="relative flex-shrink-0">
+                <div class="w-8 h-8 rounded-full bg-[var(--accent)] text-[var(--bg)] flex items-center justify-center text-xs pulse-dot"><i class="fa-solid fa-motorcycle"></i></div>
+                <div class="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-[var(--border)]"></div>
+              </div>
+              <div class="pt-1">
+                <div class="font-display text-base text-[var(--accent)]">En camino</div>
+                <div class="text-xs text-[var(--muted)] mt-0.5">19:24 · A 12 minutos</div>
+              </div>
+            </div>
+            
+            <div class="flex gap-4">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 rounded-full border border-[var(--border)] text-[var(--muted)] flex items-center justify-center text-xs"><i class="fa-solid fa-house"></i></div>
+              </div>
+              <div class="pt-1">
+                <div class="font-display text-base text-[var(--muted)]">Entregado</div>
+                <div class="text-xs text-[var(--muted)] mt-0.5">Pendiente</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-6 border border-[var(--border)] rounded-3xl">
+          <div class="tag text-[var(--muted)] mb-4">Tu repartidor</div>
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-[var(--olive)] flex items-center justify-center text-2xl">🧑‍🦱</div>
+            <div class="flex-1">
+              <div class="font-display text-lg">Marco D.</div>
+              <div class="flex items-center gap-1 text-xs text-[var(--muted)]">
+                <i class="fa-solid fa-star text-[var(--accent)] text-[10px]"></i>
+                <span>4.9 · 312 entregas</span>
+              </div>
+            </div>
+            <button class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors">
+              <i class="fa-solid fa-phone text-xs"></i>
+            </button>
+            <button class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors">
+              <i class="fa-solid fa-message text-xs"></i>
+            </button>
+          </div>
+        </div>
+        
+        <button onclick="goTo('home')" class="btn-ghost mt-6 w-full justify-center">Volver al inicio</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============== MODAL DETALLE PLATO ============== -->
+<div id="dish-modal" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-[var(--fg)]/40 backdrop-blur-sm" onclick="closeDishModal()"></div>
+  <div class="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-[var(--bg)] overflow-y-auto animate-scale">
+    <div id="dish-modal-content"></div>
+  </div>
+</div>
+
+<!-- ============== DRAWER CARRITO ============== -->
+<div id="cart-drawer" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-[var(--fg)]/40 backdrop-blur-sm" onclick="closeCart()"></div>
+  <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-[var(--bg)] flex flex-col">
+    
+    <div class="flex items-center justify-between p-6 border-b border-[var(--border)]">
+      <div>
+        <div class="tag text-[var(--muted)]">Tu bolsa</div>
+        <h3 class="font-display text-2xl mt-1">Carrito</h3>
+      </div>
+      <button onclick="closeCart()" class="w-10 h-10 rounded-full border border-[var(--border)] flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    
+    <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+    
+    <div id="cart-footer" class="border-t border-[var(--border)] p-6 space-y-4">
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span class="text-[var(--muted)]">Subtotal</span><span id="cart-subtotal"></span></div>
+        <div class="flex justify-between"><span class="text-[var(--muted)]">Envío</span><span id="cart-shipping"></span></div>
+      </div>
+      <div class="flex justify-between items-center font-display text-2xl pt-2 border-t border-[var(--border)]">
+        <span>Total</span>
+        <span id="cart-total"></span>
+      </div>
+      <button onclick="goToCheckout()" class="btn-primary w-full justify-center">
+        Tramitar pedido
+        <i class="fa-solid fa-arrow-right text-xs"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 items-center pointer-events-none"></div>
+
+<script>
+// ============== MONEDAS ==============
+const currencies = {
+  EUR: { rate: 1,     locale: 'es-ES', flag: '🇪🇺', name: 'Euro',          noDecimals: false },
+  USD: { rate: 1.08,  locale: 'en-US', flag: '🇺🇸', name: 'Dólar americano', noDecimals: false },
+  MXN: { rate: 19.5,  locale: 'es-MX', flag: '🇲🇽', name: 'Peso mexicano',  noDecimals: false },
+  COP: { rate: 4300,  locale: 'es-CO', flag: '🇨🇴', name: 'Peso colombiano', noDecimals: true  },
+  ARS: { rate: 1050,  locale: 'es-AR', flag: '🇦🇷', name: 'Peso argentino', noDecimals: false },
+  GBP: { rate: 0.85,  locale: 'en-GB', flag: '🇬🇧', name: 'Libra esterlina', noDecimals: false },
+  JPY: { rate: 165,   locale: 'ja-JP', flag: '🇯🇵', name: 'Yen japonés',    noDecimals: true  },
+};
+
+let currentCurrency = 'EUR';
+const SHIPPING_EUR = 2.5;
+
+function formatPrice(eurAmount) {
+  const c = currencies[currentCurrency];
+  const converted = eurAmount * c.rate;
+  return new Intl.NumberFormat(c.locale, {
+    style: 'currency',
+    currency: currentCurrency,
+    minimumFractionDigits: c.noDecimals ? 0 : 2,
+    maximumFractionDigits: c.noDecimals ? 0 : 2,
+  }).format(converted);
+}
+
+function formatPricePreview(eurAmount, code) {
+  const c = currencies[code];
+  const converted = eurAmount * c.rate;
+  return new Intl.NumberFormat(c.locale, {
+    style: 'currency',
+    currency: code,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(converted);
+}
+
+// ============== DATOS ==============
+const dishes = [
+  { id: 1, name: 'Bowl de Quinoa', price: 14, category: 'saludable', emoji: '🥗', desc: 'Quinoa tricolor, aguacate, edamame, mango y aderezo de sésamo.', time: '12 min', tags: ['Vegano', 'Sin gluten'], featured: true },
+  { id: 2, name: 'Pasta al Tartufo', price: 18, category: 'italiana', emoji: '🍝', desc: 'Tagliatelle fresca, crema de tartufo negro, parmesano 24 meses.', time: '18 min', tags: ['Vegetariano'], featured: true },
+  { id: 3, name: 'Omakase Sushi', price: 32, category: 'japonesa', emoji: '🍣', desc: 'Selección del chef: 12 piezas de pescado de mercado.', time: '25 min', tags: ['Premium'], featured: true },
+  { id: 4, name: 'Burger Signature', price: 16, category: 'americana', emoji: '🍔', desc: 'Carne madurada 30 días, cheddar, cebolla caramelizada.', time: '15 min' },
+  { id: 5, name: 'Ramen Tonkotsu', price: 19, category: 'japonesa', emoji: '🍜', desc: 'Caldo de 18 horas, chashu, huevo marinado, brotes de bambú.', time: '20 min' },
+  { id: 6, name: 'Tacos al Pastor', price: 12, category: 'mexicana', emoji: '🌮', desc: 'Cerdo marinado, piña, cilantro, cebolla, salsa de árbol.', time: '14 min', tags: ['Picante'] },
+  { id: 7, name: 'Mediterráneo Bowl', price: 15, category: 'saludable', emoji: '🫒', desc: 'Humus, falafel, tomate, pepino, tahini, pan pita.', time: '13 min', tags: ['Vegetariano'] },
+  { id: 8, name: 'Pad Thai', price: 14, category: 'tailandesa', emoji: '🍤', desc: 'Fideos de arroz, langostinos, cacahuetes, lima, tamarindo.', time: '16 min' },
+  { id: 9, name: 'Margherita', price: 13, category: 'italiana', emoji: '🍕', desc: 'Tomate San Marzano, mozzarella di bufala, albahaca.', time: '14 min', tags: ['Vegetariano'] },
+  { id: 10, name: 'Burrito Bowl', price: 13, category: 'mexicana', emoji: '🫘', desc: 'Arroz, frijoles, pollo, guac, pico de gallo, queso.', time: '12 min' },
+];
+
+const modalExtras = [
+  { id: 'extra-size',  label: 'Tamaño extra', desc: 'Ración doble',          price: 4   },
+  { id: 'extra-bread', label: 'Pan artesano', desc: 'Fresco del horno',      price: 2   },
+  { id: 'extra-drink', label: 'Bebida',       desc: 'Kombucha de jengibre',  price: 3.5 },
+];
+
+// ============== ESTADO ==============
+let cart = [];
+let currentCategory = 'all';
+let currentDish = null;
+let checkoutStep = 1;
+let modalQty = 1;
+
+// ============== SELECTOR DE MONEDA ==============
+function renderCurrencyDropdown() {
+  const dd = document.getElementById('currency-dropdown');
+  dd.innerHTML = Object.entries(currencies).map(([code, c]) => `
+    <button class="currency-option ${code === currentCurrency ? 'selected' : ''}" onclick="changeCurrency('${code}')">
+      <span class="flag">${c.flag}</span>
+      <div>
+        <div class="code">${code}</div>
+        <div class="name">${c.name}</div>
+      </div>
+      <span class="preview">${formatPricePreview(18, code)}</span>
+    </button>
+  `).join('');
+}
+
+function toggleCurrencyDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('currency-dropdown');
+  const btn = document.getElementById('currency-btn');
+  dd.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+function changeCurrency(code) {
+  if (code === currentCurrency) {
+    closeCurrencyDropdown();
+    return;
+  }
+  currentCurrency = code;
+  const c = currencies[code];
+  document.getElementById('currency-flag').textContent = c.flag;
+  document.getElementById('currency-code').textContent = code;
+  
+  closeCurrencyDropdown();
+  renderCurrencyDropdown();
+  refreshAllPrices();
+  showToast(`${c.flag} ${code} · ${c.name}`);
+}
+
+function closeCurrencyDropdown() {
+  document.getElementById('currency-dropdown').classList.remove('open');
+  document.getElementById('currency-btn').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('currency-wrap').contains(e.target)) {
+    closeCurrencyDropdown();
+  }
+});
+
+function refreshAllPrices() {
+  const activeView = document.querySelector('.view.active')?.id.replace('view-', '');
+  if (activeView === 'home') renderFeatured();
+  if (activeView === 'menu') renderMenu();
+  
+  if (!document.getElementById('dish-modal').classList.contains('hidden') && currentDish) {
+    openDishModal(currentDish.id);
+  }
+  
+  updateCart();
+  
+  if (activeView === 'checkout' && checkoutStep === 3) renderCheckoutSummary();
+}
+
+// ============== RENDER ==============
+function renderFeatured() {
+  const grid = document.getElementById('featured-grid');
+  const featured = dishes.filter(d => d.featured);
+  grid.innerHTML = featured.map((d, i) => dishCardHTML(d, `stagger-${i+1}`)).join('');
+}
+
+function renderMenu() {
+  const grid = document.getElementById('menu-grid');
+  const empty = document.getElementById('empty-state');
+  const filtered = currentCategory === 'all' ? dishes : dishes.filter(d => d.category === currentCategory);
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  
+  grid.innerHTML = filtered.map((d, i) => `
+    <div class="dish-card animate-in" style="animation-delay: ${i * 0.05}s" onclick="openDishModal(${d.id})">
+      ${dishCardInner(d)}
+    </div>
+  `).join('');
+}
+
+function dishCardHTML(d, extraClass = '') {
+  return `
+    <div class="dish-card animate-in ${extraClass}" onclick="openDishModal(${d.id})">
+      ${dishCardInner(d)}
+    </div>
+  `;
+}
+
+function dishCardInner(d) {
+  return `
+    <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-6 h-full flex flex-col">
+      <div class="flex items-start justify-between mb-6">
+        <div class="dish-emoji-wrap w-20 h-20 rounded-2xl bg-[var(--bg-alt)] flex items-center justify-center">
+          <span class="dish-emoji text-4xl">${d.emoji}</span>
+        </div>
+        <div class="text-right">
+          <div class="tag text-[var(--muted)]">Precio</div>
+          <div class="font-display text-2xl mt-1">${formatPrice(d.price)}</div>
+        </div>
+      </div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="tag text-[var(--muted)]">${d.category}</span>
+          <span class="w-1 h-1 rounded-full bg-[var(--muted)]"></span>
+          <span class="tag text-[var(--muted)]">${d.time}</span>
+        </div>
+        <h3 class="font-display text-2xl mb-2">${d.name}</h3>
+        <p class="text-sm text-[var(--muted)] leading-relaxed">${d.desc}</p>
+      </div>
+      <div class="flex items-center justify-between mt-6 pt-6 border-t border-[var(--border)]">
+        <div class="flex gap-2 flex-wrap">
+          ${(d.tags || []).map(t => `<span class="text-[10px] px-2 py-1 rounded-full bg-[var(--bg-alt)] text-[var(--muted)] tracking-wider uppercase">${t}</span>`).join('')}
+        </div>
+        <button onclick="event.stopPropagation(); addToCart(${d.id})" class="w-10 h-10 rounded-full bg-[var(--fg)] text-[var(--bg)] flex items-center justify-center hover:bg-[var(--accent)] transition-colors">
+          <i class="fa-solid fa-plus text-xs"></i>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ============== NAVEGACIÓN ==============
+function goTo(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  if (view === 'menu') renderMenu();
+  if (view === 'home') renderFeatured();
+}
+
+// ============== MODAL DETALLE ==============
+function openDishModal(id) {
+  const dish = dishes.find(d => d.id === id);
+  if (!dish) return;
+  currentDish = dish;
+  modalQty = 1;
+  
+  const content = document.getElementById('dish-modal-content');
+  content.innerHTML = `
+    <div class="relative">
+      <div class="h-72 bg-[var(--accent)] flex items-center justify-center relative overflow-hidden">
+        <div class="absolute inset-0 spin-slow">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] rounded-full border border-[var(--bg)]/20"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] rounded-full border border-dashed border-[var(--bg)]/30"></div>
+        </div>
+        <span class="text-[140px] relative z-10">${dish.emoji}</span>
+        <button onclick="closeDishModal()" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-[var(--bg)] flex items-center justify-center hover:rotate-90 transition-transform">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="p-8">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="tag text-[var(--muted)]">${dish.category}</span>
+          <span class="w-1 h-1 rounded-full bg-[var(--muted)]"></span>
+          <span class="tag text-[var(--muted)]">${dish.time}</span>
+        </div>
+        <h2 class="font-display text-4xl mb-4">${dish.name}</h2>
+        <p class="text-[var(--muted)] leading-relaxed mb-6">${dish.desc} Una preparación cuidada en cada detalle, pensada para satisfacer tanto el paladar como el alma.</p>
+        
+        <div class="flex gap-2 flex-wrap mb-8">
+          ${(dish.tags || []).map(t => `<span class="text-xs px-3 py-1.5 rounded-full bg-[var(--bg-alt)] text-[var(--fg)] tracking-wider uppercase font-medium">${t}</span>`).join('')}
+        </div>
+        
+        <div class="mb-8">
+          <div class="tag text-[var(--muted)] mb-4">Personaliza tu plato</div>
+          <div class="space-y-3">
+            ${modalExtras.map(ex => `
+              <label class="flex items-center justify-between p-4 border border-[var(--border)] rounded-2xl cursor-pointer hover:border-[var(--fg)] transition-colors">
+                <div>
+                  <div class="font-medium">${ex.label}</div>
+                  <div class="text-xs text-[var(--muted)]">${ex.desc}</div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm">+${formatPrice(ex.price)}</span>
+                  <input type="checkbox" class="custom-radio" id="${ex.id}" data-price="${ex.price}" onchange="updateModalTotal()">
+                </div>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3 sticky bottom-0 bg-[var(--bg)] pt-4 pb-2">
+          <div class="flex items-center gap-3 border border-[var(--border)] rounded-full px-2 py-2">
+            <button onclick="changeModalQty(-1)" class="qty-btn"><i class="fa-solid fa-minus text-xs"></i></button>
+            <span id="modal-qty" class="font-display text-lg w-6 text-center">1</span>
+            <button onclick="changeModalQty(1)" class="qty-btn"><i class="fa-solid fa-plus text-xs"></i></button>
+          </div>
+          <button onclick="addDishFromModal()" class="btn-primary flex-1 justify-center">
+            Añadir · <span id="modal-total">${formatPrice(dish.price)}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('dish-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDishModal() {
+  document.getElementById('dish-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  currentDish = null;
+}
+
+function changeModalQty(delta) {
+  modalQty = Math.max(1, modalQty + delta);
+  document.getElementById('modal-qty').textContent = modalQty;
+  updateModalTotal();
+}
+
+function updateModalTotal() {
+  if (!currentDish) return;
+  let extra = 0;
+  modalExtras.forEach(ex => {
+    if (document.getElementById(ex.id)?.checked) extra += ex.price;
+  });
+  const total = (currentDish.price + extra) * modalQty;
+  document.getElementById('modal-total').textContent = formatPrice(total);
+}
+
+function addDishFromModal() {
+  if (!currentDish) return;
+  const extras = [];
+  let extraPrice = 0;
+  modalExtras.forEach(ex => {
+    if (document.getElementById(ex.id)?.checked) {
+      extras.push(ex.label);
+      extraPrice += ex.price;
+    }
+  });
+  
+  addToCart(currentDish.id, modalQty, extras, extraPrice);
+  closeDishModal();
+}
+
+// ============== CARRITO ==============
+function addToCart(id, qty = 1, extras = [], extraPrice = 0) {
+  const dish = dishes.find(d => d.id === id);
+  if (!dish) return;
+  
+  const existing = cart.find(item => item.id === id && JSON.stringify(item.extras) === JSON.stringify(extras));
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ ...dish, qty, extras, extraPrice });
+  }
+  
+  updateCart();
+  showToast(`${dish.name} añadido a tu bolsa`);
+}
+
+function removeFromCart(index) {
+  cart.splice(index, 1);
+  updateCart();
+}
+
+function changeQty(index, delta) {
+  cart[index].qty = Math.max(1, cart[index].qty + delta);
+  updateCart();
+}
+
+function updateCart() {
+  const count = cart.reduce((sum, item) => sum + item.qty, 0);
+  const countEl = document.getElementById('cart-count');
+  countEl.textContent = count;
+  countEl.classList.toggle('hidden', count === 0);
+  
+  const itemsEl = document.getElementById('cart-items');
+  const footer = document.getElementById('cart-footer');
+  
+  if (cart.length === 0) {
+    itemsEl.innerHTML = `
+      <div class="text-center py-16">
+        <div class="text-5xl mb-4 opacity-30">🛒</div>
+        <p class="font-display text-xl mb-2">Tu bolsa está vacía</p>
+        <p class="text-sm text-[var(--muted)]">Añade algo del menú para empezar.</p>
+      </div>
+    `;
+    footer.style.display = 'none';
+    return;
+  }
+  
+  footer.style.display = 'block';
+  itemsEl.innerHTML = cart.map((item, i) => `
+    <div class="flex gap-4 pb-4 border-b border-[var(--border)]">
+      <div class="w-16 h-16 rounded-2xl bg-[var(--bg-alt)] flex items-center justify-center text-3xl flex-shrink-0">${item.emoji}</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex justify-between gap-2">
+          <h4 class="font-display text-lg">${item.name}</h4>
+          <button onclick="removeFromCart(${i})" class="text-[var(--muted)] hover:text-[var(--accent)] text-sm">
+            <i class="fa-solid fa-trash text-xs"></i>
+          </button>
+        </div>
+        ${item.extras.length > 0 ? `<div class="text-xs text-[var(--muted)] mt-0.5">${item.extras.join(' · ')}</div>` : ''}
+        <div class="flex items-center justify-between mt-3">
+          <div class="flex items-center gap-2 border border-[var(--border)] rounded-full px-1.5 py-1">
+            <button onclick="changeQty(${i}, -1)" class="w-6 h-6 rounded-full flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors text-xs">
+              <i class="fa-solid fa-minus text-[10px]"></i>
+            </button>
+            <span class="text-sm w-4 text-center">${item.qty}</span>
+            <button onclick="changeQty(${i}, 1)" class="w-6 h-6 rounded-full flex items-center justify-center hover:bg-[var(--fg)] hover:text-[var(--bg)] transition-colors text-xs">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+            </button>
+          </div>
+          <div class="font-display text-lg">${formatPrice((item.price + item.extraPrice) * item.qty)}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  const subtotal = cart.reduce((sum, item) => sum + (item.price + item.extraPrice) * item.qty, 0);
+  document.getElementById('cart-subtotal').textContent = formatPrice(subtotal);
+  document.getElementById('cart-shipping').textContent = formatPrice(SHIPPING_EUR);
+  document.getElementById('cart-total').textContent = formatPrice(subtotal + SHIPPING_EUR);
+}
+
+function openCart() {
+  document.getElementById('cart-drawer').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+  document.getElementById('cart-drawer').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// ============== CHECKOUT ==============
+function goToCheckout() {
+  if (cart.length === 0) {
+    showToast('Tu bolsa está vacía');
+    return;
+  }
+  closeCart();
+  checkoutStep = 1;
+  updateCheckoutStep();
+  goTo('checkout');
+}
+
+function updateCheckoutStep() {
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('checkout-step-' + i).classList.toggle('hidden', i !== checkoutStep);
+  }
+  
+  const dots = [1, 2, 3].map(n => document.getElementById(`step-${n}-dot`));
+  const lines = [1, 2].map(n => document.getElementById(`step-${n}-line`));
+  
+  dots.forEach((d, i) => {
+    const step = i + 1;
+    if (step <= checkoutStep) {
+      d.className = 'w-7 h-7 rounded-full bg-[var(--fg)] text-[var(--bg)] text-xs font-semibold flex items-center justify-center';
+      d.innerHTML = step < checkoutStep ? '<i class="fa-solid fa-check"></i>' : step;
+    } else {
+      d.className = 'w-7 h-7 rounded-full border border-[var(--border)] text-xs font-semibold flex items-center justify-center';
+      d.innerHTML = step;
+    }
+  });
+  
+  lines.forEach((l, i) => {
+    l.classList.toggle('active', i + 1 < checkoutStep);
+  });
+  
+  if (checkoutStep === 3) renderCheckoutSummary();
+}
+
+function nextStep() {
+  if (checkoutStep < 3) {
+    checkoutStep++;
+    updateCheckoutStep();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function prevStep() {
+  if (checkoutStep > 1) {
+    checkoutStep--;
+    updateCheckoutStep();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function renderCheckoutSummary() {
+  const summary = document.getElementById('checkout-summary');
+  summary.innerHTML = cart.map(item => `
+    <div class="flex justify-between text-sm">
+      <span class="text-[var(--muted)]">${item.qty} × ${item.name}${item.extras.length > 0 ? ' <span class="text-xs">(' + item.extras.join(', ') + ')</span>' : ''}</span>
+      <span>${formatPrice((item.price + item.extraPrice) * item.qty)}</span>
+    </div>
+  `).join('');
+  
+  const subtotal = cart.reduce((sum, item) => sum + (item.price + item.extraPrice) * item.qty, 0);
+  document.getElementById('checkout-subtotal').textContent = formatPrice(subtotal);
+  document.getElementById('checkout-shipping').textContent = formatPrice(SHIPPING_EUR);
+  document.getElementById('checkout-total').textContent = formatPrice(subtotal + SHIPPING_EUR);
+}
+
+function placeOrder() {
+  cart = [];
+  updateCart();
+  showToast('¡Pedido confirmado! 🎉');
+  setTimeout(() => goTo('tracking'), 500);
+}
+
+// ============== FILTROS ==============
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCategory = btn.dataset.cat;
+    renderMenu();
+  });
+});
+
+// ============== TOAST ==============
+function showToast(msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast bg-[var(--fg)] text-[var(--bg)] px-6 py-3 rounded-full text-sm font-medium shadow-2xl pointer-events-auto flex items-center gap-2';
+  toast.innerHTML = `<i class="fa-solid fa-check text-[var(--accent)]"></i> ${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('out');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+// ============== RELOJ ==============
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}`;
+}
+
+// ============== INIT ==============
+renderCurrencyDropdown();
+renderFeatured();
+updateClock();
+setInterval(updateClock, 60000);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!document.getElementById('dish-modal').classList.contains('hidden')) closeDishModal();
+    if (!document.getElementById('cart-drawer').classList.contains('hidden')) closeCart();
+    closeCurrencyDropdown();
+  }
+});
+</script>
+
+</body>
+</html>
